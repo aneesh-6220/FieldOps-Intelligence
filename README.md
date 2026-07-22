@@ -15,7 +15,7 @@ The included Summit Outdoor Services workspace is deterministic synthetic data. 
 - Overview and analytics for lead conversion, job performance, revenue, duration, cost variance, customer mix, and worker activity
 - Deterministic operational insights with named evidence and suggested next actions
 - CSV exports for all Phase 1 operating entities and an analytics summary
-- Alembic migrations, Pydantic validation, SQLAlchemy transactions, and 31 automated tests
+- Alembic migrations, Pydantic validation, SQLAlchemy transactions, and focused automated tests
 
 ## Architecture
 
@@ -65,7 +65,6 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -e ".[dev]"
 alembic upgrade head
-python scripts/seed_demo_data.py
 streamlit run app/main.py
 ```
 
@@ -77,28 +76,49 @@ py -3.12 -m venv .venv
 python -m pip install --upgrade pip
 pip install -e ".[dev]"
 alembic upgrade head
-python scripts\seed_demo_data.py
 streamlit run app\main.py
 ```
 
 Open the URL printed by Streamlit, normally `http://localhost:8501`.
+
+### Exact first-run behavior
+
+When the operational database has no business record, FieldOps presents two explicit choices:
+
+1. **Create a real workspace** asks for business name, industry, currency code, and timezone. It creates one business profile in `fieldops_operational.db` with `demo_data=false`. Leads, customers, workers, services, jobs, assignments, activities, and analytics source records remain empty. The demo banner is never shown in this workspace.
+2. **Load the demo workspace** creates or opens `fieldops_demo.db`, seeds the deterministic Summit Outdoor Services dataset, and enters a clearly labelled demo mode. No synthetic record is written to `fieldops_operational.db`.
+
+Once a real workspace exists, the sidebar opens it by default. **Open demo workspace** switches to the separate demo database, and **Return to real workspace** switches back without copying records between them. **Reset demo workspace** clears and reseeds only `fieldops_demo.db`; it refuses to clear a database containing a real workspace.
+
+If a demo is opened before a real workspace is created, **Create a real workspace** returns to the blank operational setup without changing the demo database.
 
 ### Configuration
 
 The application uses safe local defaults. Copy `.env.example` to `.env` only when overrides are needed:
 
 ```dotenv
-FIELDOPS_DATABASE_URL=sqlite:///fieldops.db
+FIELDOPS_DATABASE_URL=sqlite:///fieldops_operational.db
+FIELDOPS_DEMO_DATABASE_URL=sqlite:///fieldops_demo.db
 FIELDOPS_LOG_LEVEL=INFO
 FIELDOPS_AUTO_SEED=false
 ```
 
-Business details and insight thresholds are editable on the Settings page. To explicitly clear the configured local database and restore the synthetic workspace, run:
+The operational and demo database URLs must resolve to different locations. Business details and insight thresholds are editable on the Settings page. `demo_data` is controlled by the selected physical workspace and cannot carry from demo into a real workspace.
+
+The earlier Phase 1 build used `fieldops.db` for its synthetic workspace. The new defaults do not open, modify, or delete that legacy file; they start with the two explicitly separated files above. Set `FIELDOPS_DATABASE_URL` deliberately if an existing non-demo operational file must be used.
+
+To explicitly reset only the separate synthetic demo database, run:
 
 ```bash
 python scripts/reset_database.py
 # or, for an intentional non-interactive reset
 python scripts/reset_database.py --yes
+```
+
+To create the demo database from the command line without resetting an existing demo:
+
+```bash
+python scripts/seed_demo_data.py
 ```
 
 ## Demo dataset

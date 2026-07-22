@@ -23,3 +23,7 @@ class BusinessUpdate(Schema):
     @classmethod
     def normalize_currency(cls, value: str) -> str:
         return value.upper()
+
+
+class BusinessCreate(BusinessUpdate):
+    """Minimum validated details for a blank operational workspace."""

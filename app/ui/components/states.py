@@ -9,6 +9,6 @@ def empty_state(title: str, body: str) -> None:
 
 def demo_banner() -> None:
     st.markdown(
-        '<div class="demo-banner">Synthetic demo workspace — no real customer data.</div>',
+        '<div class="demo-banner">DEMO MODE — synthetic records in a separate demo database. Operational data is not shown or changed.</div>',
         unsafe_allow_html=True,
     )

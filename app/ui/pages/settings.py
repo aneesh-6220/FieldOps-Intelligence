@@ -6,7 +6,7 @@ import streamlit as st
 from pydantic import ValidationError
 
 from app.database.models import Business
-from app.database.session import session_scope
+from app.database.session import WorkspaceMode, get_active_workspace, session_scope
 from app.schemas.business import BusinessUpdate
 from app.ui.formatting import page_header
 
@@ -91,6 +91,7 @@ def render(business_id: int, currency_code: str) -> None:
                     setattr(target, key, value)
                 target.settings = {
                     **(target.settings or {}),
+                    "demo_data": get_active_workspace() == WorkspaceMode.DEMO,
                     "cost_overrun_threshold": cost / 100,
                     "duration_overrun_threshold": duration / 100,
                     "concentration_threshold": concentration / 100,

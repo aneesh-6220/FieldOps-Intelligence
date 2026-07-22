@@ -84,9 +84,11 @@ def _timestamp(day: date, hour: int = 12, minute: int = 0) -> datetime:
 
 def seed_demo_data(session: Session, *, force: bool = False) -> Business:
     """Seed an idempotent fixed-randomness dataset with intentional operating exceptions."""
-    existing = session.scalar(select(Business).where(Business.name == "Summit Outdoor Services"))
+    existing = session.scalar(select(Business).order_by(Business.id).limit(1))
     if existing and not force:
-        return existing
+        if existing.settings.get("demo_data") is True:
+            return existing
+        raise ValueError("Demo data cannot be loaded into an operational workspace")
     if existing and force:
         raise ValueError("Use the reset script before force-seeding an existing database")
 
@@ -425,7 +427,10 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
     return business
 
 
-def clear_database(session: Session) -> None:
-    """Delete local records in foreign-key-safe order for the explicit reset command."""
+def clear_demo_database(session: Session) -> None:
+    """Clear only a database whose business records are explicitly marked as demo data."""
+    businesses = list(session.scalars(select(Business)).all())
+    if any(business.settings.get("demo_data") is not True for business in businesses):
+        raise ValueError("Refusing to clear an operational workspace")
     for model in [ActivityLog, JobAssignment, Job, Lead, Customer, Worker, Service, Business]:
         session.execute(delete(model))

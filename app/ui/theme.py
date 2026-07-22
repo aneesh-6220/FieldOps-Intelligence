@@ -25,7 +25,16 @@ CSS = """
   .insight.attention { border-left-color:#c19a2c; } .insight.informational { border-left-color:#397a9f; }
   .demo-banner { background:#f4efe3; border:1px solid #e3d4b5; border-radius:8px; padding:.55rem .8rem; color:#6b562c; font-size:.82rem; }
   div[data-testid="stDataFrame"] { border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-  .stButton button[kind="primary"] { background:var(--forest); border-color:var(--forest); }
+  .stButton button, .stFormSubmitButton button, .stDownloadButton button {
+    background:#fff; border-color:var(--forest); color:var(--ink);
+  }
+  .stButton button *, .stFormSubmitButton button *, .stDownloadButton button * { color:inherit; }
+  .stButton button:hover, .stFormSubmitButton button:hover, .stDownloadButton button:hover {
+    background:var(--mint); border-color:var(--forest); color:var(--ink);
+  }
+  .stButton button[kind="primary"], .stFormSubmitButton button[kind="primary"] {
+    background:var(--forest); border-color:var(--forest); color:#fff;
+  }
 </style>
 """
 

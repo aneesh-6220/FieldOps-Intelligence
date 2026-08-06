@@ -62,9 +62,9 @@ def render(business_id: int, currency_code: str) -> None:
                 else:
                     display = frame.copy()
                     display["warning"] = display.apply(
-                        lambda row: f"Low sample (<{low_sample})"
-                        if row["leads"] < low_sample
-                        else "",
+                        lambda row: (
+                            f"Low sample (<{low_sample})" if row["leads"] < low_sample else ""
+                        ),
                         axis=1,
                     )
                     st.dataframe(

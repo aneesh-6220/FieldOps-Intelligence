@@ -115,7 +115,9 @@ with st.sidebar:
     if workspace_mode == WorkspaceMode.DEMO:
         st.warning("DEMO MODE · synthetic data")
     else:
-        st.caption("Operational workspace")
+        st.markdown(
+            '<div class="env-label">Summit pilot · operational</div>', unsafe_allow_html=True
+        )
     selected_page = st.radio("Workspace", list(PAGES), label_visibility="collapsed")
     st.markdown("---")
     if workspace_mode == WorkspaceMode.DEMO:

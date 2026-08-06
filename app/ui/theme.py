@@ -9,13 +9,14 @@ CSS = """
   [data-testid="stSidebar"] { background: #102e25; }
   [data-testid="stSidebar"] * { color: #eef7f3; }
   [data-testid="stSidebar"] .stRadio label { padding: .3rem .2rem; }
-  .block-container { max-width: 1440px; padding-top: 2rem; padding-bottom: 4rem; }
+  .block-container { max-width: 1440px; padding-top: 3.5rem; padding-bottom: 4rem; }
   h1, h2, h3 { color: var(--ink); letter-spacing: -.025em; }
   h1 { font-size: 2.1rem !important; }
   .eyebrow { color: var(--forest); text-transform: uppercase; font-size: .73rem; font-weight: 750; letter-spacing: .11em; }
   .page-subtitle { color: var(--muted); margin-top: -.55rem; margin-bottom: 1.5rem; max-width: 850px; }
   .product-mark { color:#fff; font-size:1.15rem; font-weight:750; margin-bottom:.1rem; }
   .product-tagline { color:#bcd1c9; font-size:.82rem; margin-bottom:1.4rem; }
+  .env-label { display:inline-block; color:#bcd1c9; font-size:.72rem; font-weight:650; letter-spacing:.05em; text-transform:uppercase; border:1px solid #2f5a4a; border-radius:999px; padding:.16rem .58rem; margin:.1rem 0 .5rem; }
   .metric-card { background:white; border:1px solid var(--line); border-radius:12px; padding:1rem 1.05rem; min-height:112px; box-shadow:0 1px 2px rgba(16,46,37,.04); }
   .metric-label { color:var(--muted); font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.055em; }
   .metric-value { color:var(--ink); font-size:1.55rem; font-weight:760; margin:.35rem 0 .2rem; }

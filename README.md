@@ -30,7 +30,7 @@ flowchart LR
     UI --> Analytics["Metrics and insights"]
     Analytics --> Repositories
     Repositories --> ORM["SQLAlchemy ORM"]
-    ORM --> DB[("SQLite")]
+    ORM --> DB[("SQLite locally · PostgreSQL when hosted")]
     Migrations["Alembic"] --> DB
     Seed["Synthetic seed"] --> ORM
 ```
@@ -105,6 +105,14 @@ FIELDOPS_AUTO_SEED=false
 
 The operational and demo database URLs must resolve to different locations. Business details and insight thresholds are editable on the Settings page. `demo_data` is controlled by the selected physical workspace and cannot carry from demo into a real workspace.
 
+SQLite and PostgreSQL are both supported. PostgreSQL URLs use the Psycopg 3 driver and keep the provider's SSL query parameter:
+
+```dotenv
+FIELDOPS_DATABASE_URL=postgresql+psycopg://USERNAME:PASSWORD@HOST/fieldops_operational?sslmode=require
+```
+
+Connection URLs are never logged or displayed; the About page shows only the driver name.
+
 The earlier Phase 1 build used `fieldops.db` for its synthetic workspace. The new defaults do not open, modify, or delete that legacy file; they start with the two explicitly separated files above. Set `FIELDOPS_DATABASE_URL` deliberately if an existing non-demo operational file must be used.
 
 To explicitly reset only the separate synthetic demo database, run:
@@ -121,9 +129,27 @@ To create the demo database from the command line without resetting an existing 
 python scripts/seed_demo_data.py
 ```
 
+## Hosted pilot
+
+The Summit Outdoor Services pilot runs as one **private** Streamlit Community Cloud app on Python 3.12, with two physically separate managed **PostgreSQL** databases — `fieldops_operational` and `fieldops_demo`. Connection URLs live only in Streamlit secrets; nothing sensitive is committed. Summit people are invited individually as viewers by email, so the application still needs no authentication of its own.
+
+**The hosted pilot is for synthetic or anonymized records only. Real customer personal information is prohibited**, because the pilot has no authentication, encryption workflow, backups, or retention controls.
+
+Before deploying, verify both databases without seeding either one:
+
+```bash
+python scripts/check_deployment.py
+```
+
+It prints only the role, dialect, connection status, schema status, and workspace state — never a URL, username, password, hostname, or query parameter — and exits non-zero when the databases are not safe to use.
+
+Full step-by-step instructions are in [the Summit deployment runbook](docs/summit-deployment.md).
+
 ## Demo dataset
 
 The fixed seed creates 55 leads, 25 customers, 8 services, 4 workers, 40 jobs, their assignments, and 75 activity events. It includes overdue follow-ups, qualified leads awaiting conversion, unstaffed jobs, past-due work, missing actual revenue, cost and duration overruns, and one acknowledged schedule conflict. Email addresses use the reserved example domain; no real customer data is included.
+
+Counts, relationships, and amounts come from a fixed random seed and never vary. Only the calendar anchor moves: the scenario is generated as fixed offsets around the date it is seeded, so the forward-looking half — upcoming unstaffed jobs, overdue follow-ups, the schedule conflict — keeps demonstrating the insights it was built to show instead of drifting into the past.
 
 ## Quality checks
 
@@ -154,9 +180,9 @@ docs/                 architecture and product definitions
 
 ## Scope and limitations
 
-This release is a single-process, local SQLite MVP. It has no authentication, role permissions, production tenant isolation, encryption workflow, messaging, calendar sync, mobile/offline client, automated backups, or route optimization. Conflict detection warns and requires acknowledgement; it does not optimize dispatch.
+This release is a single-process MVP: local SQLite for development, one managed PostgreSQL pair for the private hosted pilot. It has no authentication, role permissions, production tenant isolation, encryption workflow, messaging, calendar sync, mobile/offline client, automated backups, or route optimization. Hosted access is controlled entirely by Streamlit Community Cloud viewer invitations. Conflict detection warns and requires acknowledgement; it does not optimize dispatch.
 
-The next roadmap layer may add estimates, invoices, payments, expenses, imports, authentication, roles, managed PostgreSQL deployment, maps, forecasting, and richer statistical analysis. Those capabilities are intentionally not part of Phase 1.
+The next roadmap layer may add estimates, invoices, payments, expenses, imports, authentication, roles, maps, forecasting, and richer statistical analysis. Those capabilities are intentionally not part of Phase 1.
 
 Exports can contain personal information after real data is entered. Operators are responsible for device access, backups, retention, and applicable privacy obligations.
 

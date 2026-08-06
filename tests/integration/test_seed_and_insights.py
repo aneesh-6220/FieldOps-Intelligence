@@ -1,10 +1,13 @@
 """Phase 1 seed, analytics, insights, and export integration tests."""
 
+from datetime import date, timedelta
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.database.models import ActivityLog, Customer, Job, Lead, Service, Worker
-from app.database.seed import seed_demo_data
+from app.database.models.enums import JobStatus
+from app.database.seed import demo_anchor_date, seed_demo_data
 from app.services.analytics_service import AnalyticsService
 from app.services.export_service import export_csv
 from app.services.insight_service import InsightService
@@ -45,6 +48,36 @@ def test_seeded_operational_insights_cover_phase_one_rules(session: Session) -> 
     assert "Actual job costs exceeded estimates" in titles
     assert "Jobs took longer than scheduled" in titles
     assert "Revenue depends heavily on one customer" in titles
+
+
+def test_demo_scenario_keeps_upcoming_work_ahead_of_the_run_date(session: Session) -> None:
+    """The demo must still show forward-looking work whenever it is reseeded."""
+    seed_demo_data(session)
+    today = demo_anchor_date()
+    upcoming_unstaffed = [
+        job
+        for job in session.scalars(select(Job)).all()
+        if job.status in {JobStatus.SCHEDULED, JobStatus.CONFIRMED}
+        and job.scheduled_start is not None
+        and job.scheduled_start.date() >= today
+        and not job.assignments
+    ]
+    assert upcoming_unstaffed
+
+
+def test_demo_records_are_identical_for_a_fixed_anchor(session: Session) -> None:
+    """Only the calendar anchor moves; the dataset itself stays deterministic."""
+    anchor = date(2026, 7, 21)
+    seed_demo_data(session, anchor_date=anchor)
+    jobs = session.scalars(select(Job).order_by(Job.id)).all()
+    assert [job.job_number for job in jobs][:3] == [
+        "JOB-2025-0001",
+        "JOB-2025-0002",
+        "JOB-2025-0003",
+    ]
+    assert min(
+        job.scheduled_start.date() for job in jobs if job.scheduled_start
+    ) == anchor - timedelta(days=330)
 
 
 def test_csv_export_is_business_scoped(session: Session) -> None:

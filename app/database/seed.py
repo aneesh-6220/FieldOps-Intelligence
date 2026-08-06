@@ -29,7 +29,20 @@ from app.database.models.enums import (
 from app.utils.currency import money
 
 DEMO_SEED = 20250217
-DEMO_DATE = date(2026, 7, 21)
+
+
+def demo_anchor_date() -> date:
+    """Return the calendar anchor the demo scenario is built around.
+
+    Every demo record is generated from fixed offsets against this anchor and a
+    fixed random seed, so counts, relationships, and money never vary. Only the
+    anchor moves: it tracks the current date so the forward-looking half of the
+    scenario — unstaffed upcoming jobs, overdue follow-ups, the acknowledged
+    schedule conflict — keeps demonstrating the insights it was built to show
+    instead of decaying into history after the pilot has been running a while.
+    """
+    return date.today()
+
 
 FIRST_NAMES = [
     "Alex",
@@ -82,7 +95,9 @@ def _timestamp(day: date, hour: int = 12, minute: int = 0) -> datetime:
     return datetime.combine(day, time(hour=hour, minute=minute), tzinfo=UTC)
 
 
-def seed_demo_data(session: Session, *, force: bool = False) -> Business:
+def seed_demo_data(
+    session: Session, *, force: bool = False, anchor_date: date | None = None
+) -> Business:
     """Seed an idempotent fixed-randomness dataset with intentional operating exceptions."""
     existing = session.scalar(select(Business).order_by(Business.id).limit(1))
     if existing and not force:
@@ -92,6 +107,7 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
     if existing and force:
         raise ValueError("Use the reset script before force-seeding an existing database")
 
+    demo_date = anchor_date or demo_anchor_date()
     rng = random.Random(DEMO_SEED)
     business = Business(
         name="Summit Outdoor Services",
@@ -208,8 +224,8 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
             acquisition_source=sources[index % len(sources)],
             notes="Synthetic demo customer.",
             customer_status=CustomerStatus.ACTIVE if index < 23 else CustomerStatus.INACTIVE,
-            created_at=_timestamp(DEMO_DATE - timedelta(days=330 - index * 7)),
-            updated_at=_timestamp(DEMO_DATE - timedelta(days=index % 20)),
+            created_at=_timestamp(demo_date - timedelta(days=330 - index * 7)),
+            updated_at=_timestamp(demo_date - timedelta(days=index % 20)),
         )
         session.add(customer)
         customers.append(customer)
@@ -217,7 +233,7 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
 
     leads: list[Lead] = []
     for index in range(55):
-        created_day = DEMO_DATE - timedelta(days=350 - index * 6)
+        created_day = demo_date - timedelta(days=350 - index * 6)
         if index < 22:
             lead_status = LeadStatus.CONVERTED
         elif index < 30:
@@ -255,9 +271,9 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
             priority=[Priority.LOW, Priority.MEDIUM, Priority.HIGH, Priority.URGENT][index % 4],
             assigned_worker_id=workers[index % len(workers)].id if index % 3 else None,
             next_follow_up_date=(
-                DEMO_DATE - timedelta(days=3 + index % 12)
+                demo_date - timedelta(days=3 + index % 12)
                 if lead_status in {LeadStatus.QUALIFIED, LeadStatus.FOLLOW_UP, LeadStatus.CONTACTED}
-                else DEMO_DATE + timedelta(days=2 + index % 5)
+                else demo_date + timedelta(days=2 + index % 5)
                 if lead_status == LeadStatus.NEW
                 else None
             ),
@@ -273,7 +289,7 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
                 else None
             ),
             created_at=_timestamp(created_day),
-            updated_at=_timestamp(min(DEMO_DATE, created_day + timedelta(days=15 + index % 20))),
+            updated_at=_timestamp(min(demo_date, created_day + timedelta(days=15 + index % 20))),
         )
         session.add(lead)
         leads.append(lead)
@@ -282,25 +298,25 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
     jobs: list[Job] = []
     for index in range(40):
         if index < 28:
-            scheduled_day = DEMO_DATE - timedelta(days=330 - index * 11)
+            scheduled_day = demo_date - timedelta(days=330 - index * 11)
             job_status = JobStatus.COMPLETED
         elif index < 30:
-            scheduled_day = DEMO_DATE - timedelta(days=35 - index)
+            scheduled_day = demo_date - timedelta(days=35 - index)
             job_status = JobStatus.CANCELLED
         elif index in {30, 31, 36, 37, 38}:
-            scheduled_day = DEMO_DATE + timedelta(days=2 if index in {30, 31} else index - 33)
+            scheduled_day = demo_date + timedelta(days=2 if index in {30, 31} else index - 33)
             job_status = JobStatus.SCHEDULED
         elif index == 32:
-            scheduled_day = DEMO_DATE + timedelta(days=4)
+            scheduled_day = demo_date + timedelta(days=4)
             job_status = JobStatus.CONFIRMED
         elif index == 33:
-            scheduled_day = DEMO_DATE - timedelta(days=1)
+            scheduled_day = demo_date - timedelta(days=1)
             job_status = JobStatus.IN_PROGRESS
         elif index in {34, 35}:
-            scheduled_day = DEMO_DATE - timedelta(days=8 if index == 34 else -8)
+            scheduled_day = demo_date - timedelta(days=8 if index == 34 else -8)
             job_status = JobStatus.BLOCKED
         else:
-            scheduled_day = DEMO_DATE + timedelta(days=14)
+            scheduled_day = demo_date + timedelta(days=14)
             job_status = JobStatus.UNSCHEDULED
 
         customer = customers[index if index < 22 else index % 10]
@@ -311,7 +327,7 @@ def seed_demo_data(session: Session, *, force: bool = False) -> Business:
             else _timestamp(scheduled_day, 9 + index % 3)
         )
         if index == 31:
-            start = _timestamp(DEMO_DATE + timedelta(days=2), 10)
+            start = _timestamp(demo_date + timedelta(days=2), 10)
         end = start + timedelta(minutes=service.estimated_duration_minutes) if start else None
         overrun = (
             Decimal("1.55") if index in {4, 12, 20} else Decimal(str(0.90 + (index % 5) * 0.05))

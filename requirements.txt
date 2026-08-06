@@ -1,1 +1,12 @@
-.
+# Production dependencies for the hosted Streamlit Community Cloud pilot.
+# Python 3.12. Development tools live in the "dev" extra of pyproject.toml,
+# which stays the authoritative package definition.
+alembic==1.19.0
+pandas==2.3.3
+plotly==6.9.0
+psycopg[binary]==3.3.4
+pydantic[email]==2.13.4
+pydantic-settings==2.14.2
+python-dotenv==1.2.2
+SQLAlchemy==2.0.51
+streamlit==1.61.1

@@ -147,7 +147,7 @@ with st.sidebar:
         except (ValueError, DomainError):
             logging.exception("Demo initialization failed")
             st.error("The demo workspace could not be initialized. Check the application log.")
-    st.caption("Local-first MVP · v0.1.0")
+    st.caption("Summit Pilot")
 
 if should_show_demo_banner(workspace_mode, business):
     demo_banner()

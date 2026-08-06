@@ -10,7 +10,10 @@ from app.database.base import Base
 from app.database import models  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+# Alembic stores this in a ConfigParser, which treats "%" as interpolation syntax.
+# Escaping keeps PostgreSQL passwords containing "%" working, and stops the raw URL
+# from being echoed into an interpolation ValueError.
+config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))
 if config.config_file_name:
     fileConfig(config.config_file_name)
 target_metadata = Base.metadata

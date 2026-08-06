@@ -32,9 +32,13 @@ def render(business_id: int, currency_code: str) -> None:
     with right:
         st.subheader("Deployment model")
         st.write(
-            "Local-first Streamlit application with SQLAlchemy and SQLite. The database URL is configurable, but Phase 1 is verified only for local SQLite."
+            "Streamlit application with SQLAlchemy. Local development uses SQLite; the hosted Summit pilot uses managed PostgreSQL. Operational and demo records always live in separate databases."
         )
-        st.code(get_settings().database_url)
+        settings = get_settings()
+        st.code(
+            f"Operational  {settings.database_dialect}\nDemo         {settings.demo_database_dialect}"
+        )
+        st.caption("Connection details are held in environment variables and are never displayed.")
     st.warning(
         "This is not a production SaaS. Real commercial use requires authentication, authorization, privacy and security review, backups, durable infrastructure, and tested recovery procedures."
     )

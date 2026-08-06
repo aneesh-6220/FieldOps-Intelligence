@@ -6,6 +6,18 @@ from pathlib import Path
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.utils.database_url import database_dialect, normalized_target, sqlite_path
+
+
+class ConfigurationError(Exception):
+    """Raised for unsafe configuration.
+
+    This is intentionally not a ``ValueError``. Pydantic wraps ``ValueError``
+    into a ``ValidationError`` whose text echoes the offending input, which for
+    a database URL would expose the password. Raising a plain exception keeps
+    the message limited to the sanitized text below.
+    """
+
 
 class Settings(BaseSettings):
     """Application configuration with safe local defaults."""
@@ -15,8 +27,8 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "FieldOps Intelligence"
-    database_url: str = "sqlite:///fieldops_operational.db"
-    demo_database_url: str = "sqlite:///fieldops_demo.db"
+    database_url: str = Field(default="sqlite:///fieldops_operational.db", repr=False)
+    demo_database_url: str = Field(default="sqlite:///fieldops_demo.db", repr=False)
     log_level: str = "INFO"
     auto_seed: bool = False
     stale_lead_days: int = Field(default=14, ge=1, le=365)
@@ -28,38 +40,39 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def require_separate_workspace_databases(self) -> "Settings":
+        if not self.database_url.strip():
+            raise ConfigurationError("FIELDOPS_DATABASE_URL is not configured")
+        if not self.demo_database_url.strip():
+            raise ConfigurationError("FIELDOPS_DEMO_DATABASE_URL is not configured")
         if self._normalized_database_target(self.database_url) == self._normalized_database_target(
             self.demo_database_url
         ):
-            raise ValueError("Operational and demo databases must use different locations")
+            raise ConfigurationError("Operational and demo databases must use different locations")
         return self
 
     @staticmethod
     def _normalized_database_target(url: str) -> str:
-        prefix = "sqlite:///"
-        if url.startswith(prefix):
-            return str(Path(url.removeprefix(prefix)).resolve())
-        return url
+        return normalized_target(url)
 
     @property
     def sqlite_path(self) -> Path | None:
         """Return the local database path when SQLite is configured."""
-        prefix = "sqlite:///"
-        return (
-            Path(self.database_url.removeprefix(prefix))
-            if self.database_url.startswith(prefix)
-            else None
-        )
+        return sqlite_path(self.database_url)
 
     @property
     def demo_sqlite_path(self) -> Path | None:
         """Return the dedicated demo database path when SQLite is configured."""
-        prefix = "sqlite:///"
-        return (
-            Path(self.demo_database_url.removeprefix(prefix))
-            if self.demo_database_url.startswith(prefix)
-            else None
-        )
+        return sqlite_path(self.demo_database_url)
+
+    @property
+    def database_dialect(self) -> str:
+        """Return the operational driver name only, safe to display."""
+        return database_dialect(self.database_url)
+
+    @property
+    def demo_database_dialect(self) -> str:
+        """Return the demo driver name only, safe to display."""
+        return database_dialect(self.demo_database_url)
 
 
 @lru_cache

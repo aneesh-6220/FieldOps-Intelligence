@@ -5,29 +5,32 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import StrEnum
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
 from app.database.base import Base
+from app.database.engine import build_engine as _build_engine
 
-
-def _enable_sqlite_foreign_keys(engine: Engine) -> None:
-    @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_connection: object, _connection_record: object) -> None:
-        cursor = dbapi_connection.cursor()  # type: ignore[attr-defined]
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+__all__ = [
+    "DemoSessionLocal",
+    "SessionLocal",
+    "WorkspaceMode",
+    "build_engine",
+    "create_schema",
+    "demo_engine",
+    "engine",
+    "engine_for",
+    "get_active_workspace",
+    "session_factory_for",
+    "session_scope",
+    "set_active_workspace",
+]
 
 
 def build_engine(database_url: str | None = None) -> Engine:
-    """Construct an engine with SQLite safety settings when applicable."""
-    url = database_url or get_settings().database_url
-    kwargs = {"connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {}
-    engine = create_engine(url, pool_pre_ping=True, **kwargs)
-    if url.startswith("sqlite"):
-        _enable_sqlite_foreign_keys(engine)
-    return engine
+    """Construct an engine for an explicit URL, or the configured operational one."""
+    return _build_engine(database_url or get_settings().database_url)
 
 
 class WorkspaceMode(StrEnum):

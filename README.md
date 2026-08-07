@@ -182,7 +182,9 @@ docs/                 architecture and product definitions
 
 This release is a single-process MVP: local SQLite for development, one managed PostgreSQL pair for the private hosted pilot. It has no authentication, role permissions, production tenant isolation, encryption workflow, messaging, calendar sync, mobile/offline client, automated backups, or route optimization. Hosted access is controlled entirely by Streamlit Community Cloud viewer invitations. Conflict detection warns and requires acknowledgement; it does not optimize dispatch.
 
-The next roadmap layer may add estimates, invoices, payments, expenses, imports, authentication, roles, maps, forecasting, and richer statistical analysis. Those capabilities are intentionally not part of Phase 1.
+The next roadmap layer may add estimates, invoices, payments, expenses, imports, authentication, roles, maps, forecasting, and richer statistical analysis. Those capabilities are intentionally not part of Phase 1. 
+
+This software is currently only available to the intended client, Summit Outdoor Services Inc. Phase 2 will introduce capabilities which will allow multiple businesses to use the software. 
 
 Exports can contain personal information after real data is entered. Operators are responsible for device access, backups, retention, and applicable privacy obligations.
 

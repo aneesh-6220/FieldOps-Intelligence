@@ -246,8 +246,15 @@ anything that looks like a host or credential.
 
 ## 28. Troubleshooting: `ModuleNotFoundError`
 
-- The main file must be `app/main.py`, so that the repository root is the working
-  directory and the `app` package is importable.
+**`No module named 'app'`** means the repository root is not on `sys.path`. Locally
+this never happens, because `pip install -e ".[dev]"` installs the package. The hosted
+build installs `requirements.txt` only, and `streamlit run app/main.py` puts the
+script's own directory — `app/` — on `sys.path` rather than the repository root.
+`app/main.py` prepends the repository root itself to cover this, so if you see this
+error, confirm that block at the top of `app/main.py` is still present.
+
+For any other missing module:
+
 - Confirm the missing package is listed in `requirements.txt`.
 - If it is a development-only tool, it belongs in the `dev` extra of `pyproject.toml`
   and should not be imported by application code.

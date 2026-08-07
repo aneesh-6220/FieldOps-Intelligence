@@ -1,24 +1,37 @@
 """FieldOps Intelligence Streamlit entry point."""
 
 import logging
+import sys
+from pathlib import Path
 
-import streamlit as st
-from pydantic import ValidationError
+# `streamlit run app/main.py` puts this file's own directory on sys.path, not the
+# repository root, and a hosted deployment installs requirements.txt without
+# installing this project as a package. Put the repository root first so the `app`
+# package resolves in both cases. Local editable installs are unaffected.
+_REPOSITORY_ROOT = str(Path(__file__).resolve().parents[1])
+if _REPOSITORY_ROOT not in sys.path:
+    sys.path.insert(0, _REPOSITORY_ROOT)
 
-from app.database.models import Business
-from app.database.session import (
+import streamlit as st  # noqa: E402
+from pydantic import ValidationError  # noqa: E402
+
+from app.database.models import Business  # noqa: E402
+from app.database.session import (  # noqa: E402
     WorkspaceMode,
     create_schema,
     session_scope,
     set_active_workspace,
 )
-from app.schemas.business import BusinessCreate
-from app.services.workspace_service import WorkspaceService, should_show_demo_banner
-from app.ui.components.states import demo_banner
-from app.ui.navigation import PAGES
-from app.ui.theme import apply_theme
-from app.utils.logging import configure_logging
-from app.utils.validation import DomainError
+from app.schemas.business import BusinessCreate  # noqa: E402
+from app.services.workspace_service import (  # noqa: E402
+    WorkspaceService,
+    should_show_demo_banner,
+)
+from app.ui.components.states import demo_banner  # noqa: E402
+from app.ui.navigation import PAGES  # noqa: E402
+from app.ui.theme import apply_theme  # noqa: E402
+from app.utils.logging import configure_logging  # noqa: E402
+from app.utils.validation import DomainError  # noqa: E402
 
 WORKSPACE_STATE_KEY = "fieldops_workspace_mode"
 
